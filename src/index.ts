@@ -52,6 +52,38 @@ export interface ProxyConfig {
   adminNumbers: string[];
 }
 
+// Minimal .env loader (stdlib only). PM2's ecosystem `env_file` is not a real
+// PM2 option, so the app must load .env itself or production runs with empty
+// secrets. Real environment variables always win; missing file is fine.
+export function loadDotEnv(dotPath?: string): void {
+  const candidates = [
+    dotPath,
+    path.join(process.cwd(), ".env"),
+    path.join(__dirname, "..", ".env"),
+  ].filter((p): p is string => !!p);
+  for (const f of candidates) {
+    let raw = "";
+    try {
+      raw = fs.readFileSync(f, "utf8");
+    } catch {
+      continue;
+    }
+    for (const line of raw.split("\n")) {
+      const t = line.trim();
+      if (!t || t.startsWith("#")) continue;
+      const eq = t.indexOf("=");
+      if (eq < 1) continue;
+      const k = t.slice(0, eq).trim();
+      if (!k || process.env[k] !== undefined) continue;
+      let v = t.slice(eq + 1).trim();
+      if (v.length >= 2 && v.startsWith('"') && v.endsWith('"')) v = v.slice(1, -1);
+      else if (v.length >= 2 && v.startsWith("'") && v.endsWith("'")) v = v.slice(1, -1);
+      process.env[k] = v;
+    }
+    return;
+  }
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ProxyConfig {
   return {
     port: Number(env.PORT ?? 8787),
@@ -67,7 +99,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ProxyConfig {
 }
 
 // ─── JWT (HS256, no dependencies) ────────────────────────────────────────────
-
 function b64urlEncode(buf: Buffer): string {
   return buf.toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
@@ -587,6 +618,7 @@ export function createServer(cfg: ProxyConfig): http.Server {
 }
 
 if (require.main === module) {
+  loadDotEnv();
   const cfg = loadConfig();
   createServer(cfg).listen(cfg.port, () => {
     console.log(`sahiix-proxy v${VERSION} listening on :${cfg.port}`);
