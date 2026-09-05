@@ -16,20 +16,22 @@ log() {
 }
 
 check_and_sync() {
-    cd "$PROXY_DIR"
-    git fetch origin "$BRANCH" --quiet
-    LOCAL=$(git rev-parse HEAD)
-    REMOTE=$(git rev-parse "origin/$BRANCH")
+    cd "$PROXY_DIR" || return 0
+    # Never let a transient git/npm failure kill the daemon loop (set -e):
+    # every fallible step fails soft with a log line.
+    git fetch origin "$BRANCH" --quiet || { log "fetch failed, will retry"; return 0; }
+    LOCAL=$(git rev-parse HEAD 2>/dev/null) || { log "no local HEAD yet"; return 0; }
+    REMOTE=$(git rev-parse "origin/$BRANCH" 2>/dev/null) || { log "no origin/$BRANCH ref yet"; return 0; }
 
     if [ "$LOCAL" != "$REMOTE" ]; then
         log "▶ Changes detected. Pulling..."
-        git pull origin "$BRANCH"
+        git pull origin "$BRANCH" || { log "pull failed, will retry"; return 0; }
         log "▶ Installing dependencies..."
-        npm --prefix "$PROXY_DIR" ci --silent
+        npm --prefix "$PROXY_DIR" ci --silent || { log "npm ci failed, will retry"; return 0; }
         log "▶ Building..."
-        npm --prefix "$PROXY_DIR" run build
+        npm --prefix "$PROXY_DIR" run build || { log "build failed, will retry"; return 0; }
         log "▶ Restarting proxy..."
-        pm2 restart sahiix-proxy
+        pm2 restart sahiix-proxy || log "pm2 restart failed"
         log "✓ Sync complete. New HEAD: $(git rev-parse --short HEAD)"
 
         if [ -n "$WATI_API_KEY" ] && [ -n "$ADMIN_NUMBERS" ]; then
