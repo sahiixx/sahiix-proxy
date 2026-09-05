@@ -54,10 +54,10 @@ cd "$PROXY_DIR"
 
 # ─── Install & build ───
 echo -e "${YELLOW}→ Installing npm dependencies...${NC}"
-npm ci
+npm --prefix "$PROXY_DIR" ci
 
 echo -e "${YELLOW}→ Running TypeScript build...${NC}"
-npm run build
+npm --prefix "$PROXY_DIR" run build
 
 # ─── Environment setup ───
 if [ ! -f ".env" ]; then

@@ -25,9 +25,9 @@ check_and_sync() {
         log "▶ Changes detected. Pulling..."
         git pull origin "$BRANCH"
         log "▶ Installing dependencies..."
-        npm ci --silent
+        npm --prefix "$PROXY_DIR" ci --silent
         log "▶ Building..."
-        npm run build
+        npm --prefix "$PROXY_DIR" run build
         log "▶ Restarting proxy..."
         pm2 restart sahiix-proxy
         log "✓ Sync complete. New HEAD: $(git rev-parse --short HEAD)"
