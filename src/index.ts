@@ -27,7 +27,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 export const TIER_LIMITS: Record<string, number> = {
   free: 20,
   standard: 100,
