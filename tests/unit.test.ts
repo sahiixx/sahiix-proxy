@@ -65,6 +65,19 @@ describe("rate limit", () => {
     expect(checkRateLimit(dir, "u", "pro").limit).toBe(500);
     expect(checkRateLimit(dir, "u", "standard").limit).toBe(100);
   });
+
+  test("malicious userId cannot escape kv dir", () => {
+    const parent = fs.mkdtempSync(path.join(os.tmpdir(), "rl-parent-"));
+    const dir = path.join(parent, "kv");
+    const evil = "../../evil-escape";
+    const r = checkRateLimit(dir, evil, "free");
+    expect(r.allowed).toBe(true);
+    const written = fs.readdirSync(dir);
+    expect(written.length).toBe(1);
+    expect(path.resolve(dir, written[0] as string).startsWith(path.resolve(dir))).toBe(true);
+    expect(fs.existsSync(path.join(parent, "evil-escape"))).toBe(false);
+    expect(written[0]).not.toContain("..");
+  });
 });
 
 describe("governance rules", () => {

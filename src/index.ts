@@ -146,9 +146,12 @@ export function checkRateLimit(rateKv: string, userId: string, tier: Tier): Rate
   const limit = TIER_LIMITS[tier] ?? TIER_LIMITS.free ?? 20;
   const now = new Date();
   const retryAfter = 60 - now.getSeconds();
+  // userId is attacker-influenced (JWT sub claim): never interpolate raw into a
+  // path — hash it so traversal strings like ../../x stay inside rateKv.
+  const safeId = crypto.createHash("sha256").update(userId).digest("hex").slice(0, 32);
   try {
     fs.mkdirSync(rateKv, { recursive: true });
-    const f = path.join(rateKv, `${userId}-${minuteKey(now)}.count`);
+    const f = path.join(rateKv, `${safeId}-${minuteKey(now)}.count`);
     let count = 0;
     try {
       count = Number(fs.readFileSync(f, "utf8")) || 0;
