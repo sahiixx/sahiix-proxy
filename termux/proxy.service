@@ -1,0 +1,9 @@
+#!/data/data/com.termux/files/usr/bin/bash
+# Termux service script for runit/sv
+exec 2>&1
+
+cd "$HOME/sahiix-proxy" || exit 1
+export NODE_ENV=production
+export $(cat .env | xargs) 2>/dev/null || true
+
+exec node dist/index.js
