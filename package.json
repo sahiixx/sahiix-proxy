@@ -1,6 +1,6 @@
 {
   "name": "sahiix-proxy",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Sahiix Edge Proxy - Termux deployment (WATI + rate-limit + governance KV)",
   "main": "dist/index.js",
   "scripts": {

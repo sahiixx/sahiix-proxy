@@ -27,7 +27,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as crypto from "node:crypto";
 
-export const VERSION = "0.2.0";
+export const VERSION = "0.2.1";
 export const TIER_LIMITS: Record<string, number> = {
   free: 20,
   standard: 100,
@@ -291,6 +291,7 @@ function sendJson(
   extra: Record<string, string> = {},
 ): void {
   setCors(res);
+  res.setHeader("X-Proxy-Version", VERSION);
   for (const [k, v] of Object.entries(extra)) res.setHeader(k, v);
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(obj));
@@ -389,6 +390,7 @@ async function handle(
 
   if (req.method === "OPTIONS") {
     setCors(res);
+    res.setHeader("X-Proxy-Version", VERSION);
     res.writeHead(204);
     res.end();
     return;
@@ -547,6 +549,7 @@ async function handle(
     try {
       const up = await forward(cfg, url.pathname + url.search, body || "{}", claims, reqId);
       setCors(res);
+      res.setHeader("X-Proxy-Version", VERSION);
       res.setHeader("X-Request-ID", reqId);
       res.setHeader("X-RateLimit-Limit", String(rate.limit));
       res.setHeader("X-RateLimit-Remaining", String(rate.remaining));

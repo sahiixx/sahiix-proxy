@@ -271,6 +271,13 @@ describe("cors", () => {
     const r = await call("POST", "/proxy", { token: token("e2e-cors-user"), body: {} });
     expect(r.headers.get("access-control-allow-origin")).toBe("*");
   });
+
+  test("responses carry X-Proxy-Version", async () => {
+    const h = await call("GET", "/health");
+    expect(h.headers.get("x-proxy-version")).toBeTruthy();
+    const p = await call("POST", "/proxy", { token: token("e2e-ver-user"), body: {} });
+    expect(p.headers.get("x-proxy-version")).toBeTruthy();
+  });
 });
 
 describe("proxy headers", () => {
